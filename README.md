@@ -22,8 +22,8 @@
 
 ## Ferramentas usadas para compilação de codigo.
 
--Usamos o ambiente > https://www.msys2.org/.
--Conjunto de ferramentas para o ESP8266.
+- Usamos o ambiente > https://www.msys2.org/.
+- Conjunto de ferramentas para o ESP8266.
 O passo a passo para a instalação pode ser encontrada no link abaixo.
 > https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/
 
@@ -53,6 +53,12 @@ Você devera configurar as seguintes linhas do arquivo.
   
   #define PORT 5005
   ```
+  
+  ## Hora de compilar o codigo
+  
+  * Se toda a instalação do terminal "mingw32" foram feitas corretamente você pode abrilo.
+  * Navegue até a pasta do projeto onde se encontra o arquivo "Makefile"
+  
 
 
 
