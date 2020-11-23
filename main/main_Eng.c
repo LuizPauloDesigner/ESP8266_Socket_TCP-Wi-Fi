@@ -109,7 +109,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         if( DEBUG )
-            ESP_LOGI(printf, "Tentando conectar ao WiFi...\r\n");
+            printf( "Tentando conectar ao WiFi...\r\n");
         
         xEventGroupClearBits(app_event_group, WIFI_FAIL_BIT);
         s_retry_num = 0;
@@ -119,18 +119,18 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             
             esp_wifi_connect();
             s_retry_num++;
-            ESP_LOGW(printf, "Tentando reconectar ao WiFi...");
+            printf( "Tentando reconectar ao WiFi...");
         } else {
             
             xEventGroupSetBits(app_event_group, WIFI_FAIL_BIT);
             xEventGroupClearBits(app_event_group, WIFI_CONNECTED_BIT); 
-            ESP_LOGE(printf,"Falha ao conectar ao WiFi");
+            printf("Falha ao conectar ao WiFi");
         }
         
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(printf, "Conectado! O IP atribuido é:" IPSTR, IP2STR(&event->ip_info.ip));
+        printf( "Conectado! O IP atribuido é:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
         
         xEventGroupSetBits(app_event_group, WIFI_CONNECTED_BIT);
@@ -192,7 +192,7 @@ static void task_GPIO_Control(void *pvParameter)
 void task_button( void *pvParameter ){
     
     if( DEBUG )
-      ESP_LOGI( printf, "Inicializada task_button...\r\n" ); 
+      printf(  "Inicializada task_button...\r\n" ); 
 
     //gpio_set_direction( LED_2, GPIO_MODE_OUTPUT );
     //gpio_set_level( LED_BUILDING, 1 );  //O Led desliga em nível 1;  
@@ -212,7 +212,7 @@ void task_button( void *pvParameter ){
       if (!gpio_get_level(BUTTON))
         {
             if( DEBUG )
-                ESP_LOGI(printf, "Botão Pressionado");         
+                printf( "Botão Pressionado");         
             for (int i = 1; i < 7; i++){
                 gpio_set_level(LED_2, i % 2); //pisca led
                 vTaskDelay( 50 / portTICK_RATE_MS );
@@ -231,7 +231,7 @@ void task_button( void *pvParameter ){
 
 static void tcp_server_task(void *pvParameters)
 {
-    ESP_LOGI(printf, "tcp_server_task init");
+    printf( "tcp_server_task init");
     char rx_buffer[128];
     char addr_str[128];
     int addr_family;
@@ -244,7 +244,7 @@ static void tcp_server_task(void *pvParameters)
         xEventGroupWaitBits(app_event_group, (WIFI_CONNECTED_BIT | WIFI_IP_STA_GOT_IP), pdFALSE, pdFALSE, portMAX_DELAY);
 
 #ifdef CONFIG_EXAMPLE_IPV4
-        ESP_LOGI(printf, "Conectado no IP:%s", HOST_IP_ADDR);
+        printf( "Conectado no IP:%s", HOST_IP_ADDR);
         struct sockaddr_in destAddr;
         destAddr.sin_addr.s_addr = inet_addr(HOST_IP_ADDR);
         destAddr.sin_family = AF_INET;
@@ -266,22 +266,22 @@ static void tcp_server_task(void *pvParameters)
         int sock = socket(addr_family, SOCK_STREAM, ip_protocol);
         if (sock < 0)
         {
-            ESP_LOGE(printf, "Unable to create socket: errno %d", errno);
+            printf( "Unable to create socket: errno %d", errno);
             vTaskDelay(3000 / portTICK_PERIOD_MS); // Aguarda 3 segundos e tenta novamente
             continue;
         }
 
-        ESP_LOGI(printf, "Socket created");
+        printf( "Socket created");
 
         int err = connect(sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
         if (err != 0)
         {
-            ESP_LOGE(printf, "Socket unable to connect: errno %d", errno);
+            printf( "Socket unable to connect: errno %d", errno);
             vTaskDelay(3000 / portTICK_PERIOD_MS); // Aguarda 3 segundos e tenta novamente
             close(sock);
             continue;
         }
-        ESP_LOGI(printf, "Successfully connected");
+        printf( "Successfully connected");
 
         while (1)
         {
@@ -289,18 +289,18 @@ static void tcp_server_task(void *pvParameters)
             if (xQueueReceive(tcp_queue, &rx_buffer, pdMS_TO_TICKS(1000)) == true)
             {
                 sprintf(payload, "%s", rx_buffer);
-                ESP_LOGE(printf, "-> payload: %s", payload);
+                printf( "-> payload: %s", payload);
             }
             else
             {
                 sprintf(payload, "%s", msg);
-                ESP_LOGE(printf, "-> data: %s", msg);
+                printf( "-> data: %s", msg);
             }
 
             int err = send(sock, payload, strlen(payload), 0);
             if (err < 0)
             {
-                ESP_LOGE(printf, "Error occured during sending: errno %d", errno);
+                printf( "Error occured during sending: errno %d", errno);
                 break;
             }
 
@@ -308,7 +308,7 @@ static void tcp_server_task(void *pvParameters)
             // Error occured during receiving
             if (len < 0)
             {
-                ESP_LOGE(printf, "recv failed: errno %d", errno);
+                printf( "recv failed: errno %d", errno);
                 break;
             }
 
@@ -316,8 +316,8 @@ static void tcp_server_task(void *pvParameters)
             else
             {
                 rx_buffer[len] = 0;
-                ESP_LOGI(printf, "Received %d bytes from %s:", len, addr_str);
-                ESP_LOGI(printf, "%s", rx_buffer);
+                printf( "Received %d bytes from %s:", len, addr_str);
+                printf( "%s", rx_buffer);
                 uint32_t req = 0;
 
                 if (strstr((const char *)rx_buffer, "DHT") != NULL)
@@ -338,7 +338,7 @@ static void tcp_server_task(void *pvParameters)
 
         if (sock != -1)
         {
-            ESP_LOGE(printf, "Shutting down socket and restarting...");
+            printf( "Shutting down socket and restarting...");
             shutdown(sock, 0);
             close(sock);
         }
@@ -380,12 +380,12 @@ static void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
 
-    ESP_LOGI(printf, "wifi iniciou");
+    printf( "wifi iniciou");
 }
 
 static void dht_task(void *pvParameters)
 {
-    ESP_LOGI(printf, "Init");
+    printf( "Init");
     int16_t temperature = 0;
     int16_t humidity = 0;
 
@@ -407,13 +407,13 @@ static void dht_task(void *pvParameters)
             if (dht_read_data(sensor_type, DHT11_GPIO, &humidity, &temperature) == ESP_OK)
             {
                 sprintf(res, "Humidade: %d%% Temperatura: %d°C\r\n", humidity / 10, temperature / 10);
-                ESP_LOGI(printf, "%s", res);
+                printf( "%s", res);
                 xQueueSend(tcp_queue, &res, 0);
             }
             else
             {
                 sprintf(res, "Could not read data from sensor dht\r\n");
-                ESP_LOGE(printf, "%s", res);
+                printf( "%s", res);
                 xQueueSend(tcp_queue, &res, 0);
             }
 
@@ -426,7 +426,7 @@ static void dht_task(void *pvParameters)
 
 static void task_ultrasonico(void *pvParamters)
 {
-    ESP_LOGI(printf, "Init");
+    printf( "Init");
     ultrasonic_sensor_t sensor = {
         .trigger_pin = TRIGGER_GPIO,
         .echo_pin = ECHO_GPIO};
@@ -451,29 +451,29 @@ static void task_ultrasonico(void *pvParamters)
                 {
                 case ESP_ERR_ULTRASONIC_PING:
                     sprintf(res, "%s", "Cannot ping (device is in invalid state)\r\n");
-                    ESP_LOGE(printf, "%s", res);
+                    printf( "%s", res);
                     xQueueSend(ultrasonic_queue, &res, 0); 
                     break;
                 case ESP_ERR_ULTRASONIC_PING_TIMEOUT:
                     sprintf(res, "%s", "Ping timeout (no device found)\r\n");
-                    ESP_LOGE(printf, "%s", res);
+                    printf( "%s", res);
                     xQueueSend(ultrasonic_queue, &res, 0); 
                     break;
                 case ESP_ERR_ULTRASONIC_ECHO_TIMEOUT:
                     sprintf(res, "%s", "Echo timeout (i.e. distance too big)\r\n");
-                    ESP_LOGE(printf, "%s", res);
+                    printf( "%s", res);
                     xQueueSend(ultrasonic_queue, &res, 0); 
                     break;
                 default:
                     sprintf(res, "%u\r\n", ret);
-                    ESP_LOGE(printf, "%s", res);
+                    printf( "%s", res);
                     xQueueSend(ultrasonic_queue, &res, 0);
                 }
             }
             else
             {
                 sprintf(res, "Distancia: %d cm\r\n", distance);
-                ESP_LOGE(printf, "%s", res);
+                printf( "%s", res);
                 xQueueSend(tcp_queue, &res, 0);
             }
         }
@@ -485,7 +485,7 @@ static void task_ultrasonico(void *pvParamters)
 void app_main()
 {
     ESP_ERROR_CHECK(nvs_flash_init());
-    ESP_LOGI(printf, "Init app.");
+    printf( "Init app.");
 
     app_event_group = xEventGroupCreate();
     tcp_queue = xQueueCreate(10, sizeof(char) * 150);      // Cria *buffer* 
